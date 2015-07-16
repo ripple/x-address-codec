@@ -17,13 +17,13 @@ function seqEqual(arr1, arr2) {
 
 // Concatenates args and/or contents of sequence conforming args to an Array.
 function toArray() {
-  let args = arguments;
+  const args = arguments;
   if (args.length === 1 && Array.isArray(args[0])) {
     return args[0];
   }
-  let ret = [];
+  const ret = [];
   for (let i = 0; i < args.length; i++) {
-    let arg = args[i];
+    const arg = args[i];
     if (arg.length !== undefined) {
       for (let j = 0; j < arg.length; j++) {
         ret.push(arg[j]);
@@ -81,17 +81,22 @@ class AddressCodec {
 
   encode(bytes, opts={}) {
     const {version} = opts;
-    return isSet(version) ? this.encodeVersioned(bytes, version) :
-                            this.encodeRaw(bytes);
+    return isSet(version) ?
+              this.encodeVersioned(bytes, version) :
+           isSet(opts.checked) ?
+              this.encodeChecked(bytes) :
+              this.encodeRaw(bytes);
   }
 
   decode(string, opts={}) {
-    const {version, versions, expectedLength} = opts;
+    const {version, versions} = opts;
     return isSet(versions) ?
-                this.decodeMultiVersioned(string, versions, expectedLength) :
+              this.decodeMultiVersioned(string, versions, opts.expectedLength) :
            isSet(version) ?
-                this.decodeVersioned(string, version) :
-                this.decodeRaw(string);
+              this.decodeVersioned(string, version) :
+           isSet(opts.checked) ?
+              this.decodeChecked(string) :
+              this.decodeRaw(string);
   }
 
   decodeChecked(encoded) {
@@ -106,8 +111,7 @@ class AddressCodec {
   }
 
   decodeVersioned(string, version) {
-    const versions = Array.isArray(version) ? version : [version];
-    return this.decodeMultiVersioned(string, versions).bytes;
+    return this.decodeMultiVersioned(string, [version]).bytes;
   }
 
   /**
@@ -132,7 +136,6 @@ class AddressCodec {
   }
 
   /**
-  *
   * @param {String} encoded - base58 checksum encoded data string
   * @param {Array} possibleVersions - array of possible versions.
   *                                   Each element could be a single byte or an
@@ -145,15 +148,21 @@ class AddressCodec {
     const withoutSum = this.decodeChecked(encoded);
     const ret = {version: null, bytes: null};
 
-    const payloadLength = expectedLength || withoutSum.length - 1;
+    if (possibleVersions.length > 1 && !expectedLength) {
+      throw new Error('must pass expectedLengthgth > 1 possibleVersions');
+    }
+
+    const versionLenGuess = possibleVersions[0].length || 1; // Number.length
+    const payloadLength = expectedLength || withoutSum.length - versionLenGuess;
     const versionBytes = withoutSum.slice(0, -payloadLength);
     const payload = withoutSum.slice(-payloadLength);
 
-    possibleVersions.forEach(function(version) {
+    possibleVersions.forEach(function(version, i) {
       const asArray = Array.isArray(version) ? version : [version];
       if (seqEqual(versionBytes, asArray)) {
         ret.version = version;
         ret.bytes = payload;
+        ret.versionIx = i;
         return false;
       }
     });

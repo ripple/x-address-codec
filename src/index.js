@@ -21,7 +21,7 @@ function apiFactory(options) {
 
   /*eslint-enable no-unused-vars*/
   const codecs = {};
-  for (let name in alphabets)
+  for (const name in alphabets)
     codecs[name] = new Codec(alphabets[name]);
 
   return {

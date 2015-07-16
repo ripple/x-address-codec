@@ -31,17 +31,6 @@ const options = {sha256, defaultAlphabet: 'ripple'};
 const {encode, decode, codecs : {ripple, bitcoin}, Codec} = apiFactory(options);
 
 describe('Codec', function() {
-
-  describe('multiple versions', function() {
-    it('it inteprets an array passed as `version` as ' +
-          'multiple allowed versions', function() {
-      const encoded = bitcoin.encodeVersioned(TWENTY_ZEROES, 0);
-      const decoded = bitcoin.decodeVersioned(encoded, [0, 5]);
-      assert.throws(_ => bitcoin.decodeVersioned(encoded, [1, 5]),
-                    /version_invalid/);
-    })
-  });
-
   describe('encodeVersioned', function() {
     it('0', function() {
       const encoded = encode(digitArray('00000000000000000000'),
@@ -116,6 +105,13 @@ describe('Codec', function() {
 
       // The canonical version for sed25519 prefixes
       assert(_.isEqual(version, VER_ED25519_SEED));
+    });
+  });
+  describe('decoding multiple versions', function() {
+    it('returns the version passed in by reference', function() {
+      const args = {versions: [VER_ED25519_SEED], expectedLength: 16};
+      const decoded = decode('sEdTM1uX8pu2do5XvTnutH6HsouMaM2', args);
+      assert(decoded.version === VER_ED25519_SEED)
     });
   });
   describe('decode', function() {
