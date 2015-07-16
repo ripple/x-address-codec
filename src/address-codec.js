@@ -91,7 +91,8 @@ class AddressCodec {
   decode(string, opts={}) {
     const {version, versions} = opts;
     return isSet(versions) ?
-              this.decodeMultiVersioned(string, versions, opts.expectedLength) :
+              this.decodeMultiVersioned(
+                  string, versions, opts.expectedLength, opts.versionTypes) :
            isSet(version) ?
               this.decodeVersioned(string, version) :
            isSet(opts.checked) ?
@@ -142,9 +143,11 @@ class AddressCodec {
   *                                   array of bytes.
   * @param {Number} expectedLength - of decoded bytes minus checksum
   *
+  * @param {Array} [types] - parrallel array of names matching possibleVersions
+  *
   * @return {Object} -
   */
-  decodeMultiVersioned(encoded, possibleVersions, expectedLength) {
+  decodeMultiVersioned(encoded, possibleVersions, expectedLength, names) {
     const withoutSum = this.decodeChecked(encoded);
     const ret = {version: null, bytes: null};
 
@@ -163,6 +166,9 @@ class AddressCodec {
         ret.version = version;
         ret.bytes = payload;
         ret.versionIx = i;
+        if (names) {
+          ret.type = names[i];
+        }
         return false;
       }
     });
