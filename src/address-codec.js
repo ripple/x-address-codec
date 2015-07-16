@@ -20,29 +20,6 @@ class AddressCodec {
     this.base = alphabet.length;
   }
 
-  encodeRaw(bytes) {
-    return this.codec.encode(bytes);
-  }
-
-  decodeRaw(string) {
-    return this.codec.decode(string);
-  }
-
-  verifyCheckSum(bytes) {
-    const computed = sha256(sha256(bytes.slice(0, -4))).slice(0, 4);
-    const checksum = bytes.slice(-4);
-    return seqEqual(computed, checksum);
-  };
-
-  encodeVersioned(bytes, version) {
-    return this.encodeChecked(toArray(version, bytes));
-  }
-
-  encodeChecked(buffer) {
-    const check = sha256(sha256(buffer)).slice(0, 4);
-    return this.encodeRaw(toArray(buffer, check));
-  }
-
   encode(bytes, opts={}) {
     const {version} = opts;
     return isSet(version) ?
@@ -64,6 +41,19 @@ class AddressCodec {
               this.decodeRaw(string);
   }
 
+  encodeRaw(bytes) {
+    return this.codec.encode(bytes);
+  }
+
+  decodeRaw(string) {
+    return this.codec.decode(string);
+  }
+
+  encodeChecked(buffer) {
+    const check = sha256(sha256(buffer)).slice(0, 4);
+    return this.encodeRaw(toArray(buffer, check));
+  }
+
   decodeChecked(encoded) {
     const buf = this.decodeRaw(encoded);
     if (buf.length < 5) {
@@ -75,9 +65,62 @@ class AddressCodec {
     return buf.slice(0, -4);
   }
 
+  encodeVersioned(bytes, version) {
+    return this.encodeChecked(toArray(version, bytes));
+  }
+
   decodeVersioned(string, version) {
     return this.decodeMultiVersioned(string, [version]).bytes;
   }
+
+  /**
+  * @param {String} encoded - base58 checksum encoded data string
+  * @param {Array} possibleVersions - array of possible versions.
+  *                                   Each element could be a single byte or an
+  *                                   array of bytes.
+  * @param {Number} expectedLength - of decoded bytes minus checksum
+  *
+  * @param {Array} [types] - parrallel array of names matching possibleVersions
+  *
+  * @return {Object} -
+  */
+  decodeMultiVersioned(encoded, possibleVersions, expectedLength, types) {
+    const withoutSum = this.decodeChecked(encoded);
+    const ret = {version: null, bytes: null};
+
+    if (possibleVersions.length > 1 && !expectedLength) {
+      throw new Error('must pass expectedLengthgth > 1 possibleVersions');
+    }
+
+    const versionLenGuess = possibleVersions[0].length || 1; // Number.length
+    const payloadLength = expectedLength || withoutSum.length - versionLenGuess;
+    const versionBytes = withoutSum.slice(0, -payloadLength);
+    const payload = withoutSum.slice(-payloadLength);
+
+    possibleVersions.forEach(function(version, i) {
+      const asArray = Array.isArray(version) ? version : [version];
+      if (seqEqual(versionBytes, asArray)) {
+        ret.version = version;
+        ret.bytes = payload;
+        ret.versionIx = i;
+        if (types) {
+          ret.type = types[i];
+        }
+        return false;
+      }
+    });
+
+    if (!ret.bytes) {
+      throw new Error('version_invalid');
+    }
+    return ret;
+  };
+
+  verifyCheckSum(bytes) {
+    const computed = sha256(sha256(bytes.slice(0, -4))).slice(0, 4);
+    const checksum = bytes.slice(-4);
+    return seqEqual(computed, checksum);
+  };
 
   /**
   * @param {Number} payloadLength - number of bytes encoded not incl checksum
@@ -99,50 +142,6 @@ class AddressCodec {
     const version = bytes.slice(0, -totalLength);
     return version;
   }
-
-  /**
-  * @param {String} encoded - base58 checksum encoded data string
-  * @param {Array} possibleVersions - array of possible versions.
-  *                                   Each element could be a single byte or an
-  *                                   array of bytes.
-  * @param {Number} expectedLength - of decoded bytes minus checksum
-  *
-  * @param {Array} [types] - parrallel array of names matching possibleVersions
-  *
-  * @return {Object} -
-  */
-  decodeMultiVersioned(encoded, possibleVersions, expectedLength, names) {
-    const withoutSum = this.decodeChecked(encoded);
-    const ret = {version: null, bytes: null};
-
-    if (possibleVersions.length > 1 && !expectedLength) {
-      throw new Error('must pass expectedLengthgth > 1 possibleVersions');
-    }
-
-    const versionLenGuess = possibleVersions[0].length || 1; // Number.length
-    const payloadLength = expectedLength || withoutSum.length - versionLenGuess;
-    const versionBytes = withoutSum.slice(0, -payloadLength);
-    const payload = withoutSum.slice(-payloadLength);
-
-    possibleVersions.forEach(function(version, i) {
-      const asArray = Array.isArray(version) ? version : [version];
-      if (seqEqual(versionBytes, asArray)) {
-        ret.version = version;
-        ret.bytes = payload;
-        ret.versionIx = i;
-        if (names) {
-          ret.type = names[i];
-        }
-        return false;
-      }
-    });
-
-    if (!ret.bytes) {
-      throw new Error('version_invalid');
-    }
-    return ret;
-  };
-
 }
 
 /*eslint-disable indent*/

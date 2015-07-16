@@ -15,13 +15,14 @@ function addMethods(codecMethods, api) {
     function add(operation) {
       api[operation + name] = function(string) {
         return api[operation](string, args);
-      }
+      };
     }
     add('decode');
-    if (!args.versions)
+    if (!args.versions) {
       add('encode');
+    }
   }
-  for (var k in codecMethods) {
+  for (const k in codecMethods) {
     addVersion(k, codecMethods[k]);
   }
   return api;
