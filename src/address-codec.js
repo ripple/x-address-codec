@@ -123,12 +123,12 @@ class AddressCodec {
   };
 
   /**
-  * @param {Number} payloadLength - number of bytes encoded not incl checksum
   * @param {String} desiredPrefix - desired prefix when base58 encoded with
   *                                 checksum
+  * @param {Number} payloadLength - number of bytes encoded not incl checksum
   * @return {Array} version
   */
-  findPrefix(payloadLength, desiredPrefix) {
+  findPrefix(desiredPrefix, payloadLength) {
     if (this.base !== 58) {
       throw new Error('Only works for base58');
     }

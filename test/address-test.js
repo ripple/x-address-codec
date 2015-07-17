@@ -81,7 +81,7 @@ describe('Codec', function() {
   describe('findPrefix', function() {
     it('can find the right version bytes to induce `sEd` for 16 byte payloads',
         function() {
-      const version = ripple.findPrefix(16, 'sEd');
+      const version = ripple.findPrefix('sEd', 16);
 
       // Fill an array of 16 bytes
       const filled = _.fill(Array(16), 0xFF);
