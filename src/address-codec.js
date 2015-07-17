@@ -24,7 +24,7 @@ class AddressCodec {
     const {version} = opts;
     return isSet(version) ?
               this.encodeVersioned(bytes, version) :
-           isSet(opts.checked) ?
+           opts.checked ?
               this.encodeChecked(bytes) :
               this.encodeRaw(bytes);
   }
@@ -36,7 +36,7 @@ class AddressCodec {
                   string, versions, opts.expectedLength, opts.versionTypes) :
            isSet(version) ?
               this.decodeVersioned(string, version) :
-           isSet(opts.checked) ?
+           opts.checked ?
               this.decodeChecked(string) :
               this.decodeRaw(string);
   }
@@ -93,7 +93,8 @@ class AddressCodec {
     }
 
     const versionLenGuess = possibleVersions[0].length || 1; // Number.length
-    const payloadLength = expectedLength || withoutSum.length - versionLenGuess;
+    const payloadLength = expectedLength ||
+                                (withoutSum.length - versionLenGuess);
     const versionBytes = withoutSum.slice(0, -payloadLength);
     const payload = withoutSum.slice(-payloadLength);
 
@@ -102,7 +103,6 @@ class AddressCodec {
       if (seqEqual(versionBytes, asArray)) {
         ret.version = version;
         ret.bytes = payload;
-        ret.versionIx = i;
         if (types) {
           ret.type = types[i];
         }
