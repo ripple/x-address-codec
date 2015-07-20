@@ -1,6 +1,8 @@
 'use strict';
+/*eslint-disable comma-spacing*/
+
 const hash = require('hash.js');
-const bn = require('bn.js');
+const BN = require('bn.js');
 const _ = require('lodash');
 const assert = require('assert');
 const fixtures = require('./fixtures/base58.json');
@@ -8,6 +10,8 @@ const apiFactory = require('../src');
 
 const VER_ED25519_SEED = [1, 225, 75];
 const TWENTY_ZEROES = [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0];
+
+/*eslint-enable comma-spacing*/
 
 function sha256(bytes) {
   return hash.sha256().update(bytes).digest();
@@ -20,7 +24,7 @@ function digitArray(str) {
 }
 
 function bnFactory(bytes) {
-  return new bn(bytes, 'be');
+  return new BN(bytes, 'be');
 }
 
 function hexToByteArray(hex) {
@@ -28,31 +32,31 @@ function hexToByteArray(hex) {
 }
 
 const options = {sha256, defaultAlphabet: 'ripple'};
-const {encode, decode, codecs : {ripple, bitcoin}, Codec} = apiFactory(options);
+const {encode, decode, codecs: {ripple}} = apiFactory(options);
 
 describe('Codec', function() {
   describe('encodeVersioned', function() {
     it('0', function() {
       const encoded = encode(digitArray('00000000000000000000'),
-                                   {version : 0});
+                                   {version: 0});
       assert.strictEqual(encoded, 'rrrrrrrrrrrrrrrrrrrrrhoLvTp');
     });
     it('1', function() {
       const encoded = encode(digitArray('00000000000000000001'),
-                                   {version : 0});
+                                   {version: 0});
       assert.strictEqual(encoded, 'rrrrrrrrrrrrrrrrrrrrBZbvji');
     });
   });
   describe('decodeVersioned', function() {
     it('rrrrrrrrrrrrrrrrrrrrrhoLvTp', function() {
       const decoded = decode('rrrrrrrrrrrrrrrrrrrrrhoLvTp',
-                                   {version : 0});
+                                   {version: 0});
 
       assert(bnFactory(decoded).cmpn(0) === 0);
     });
     it('rrrrrrrrrrrrrrrrrrrrBZbvji', function() {
       const decoded = decode('rrrrrrrrrrrrrrrrrrrrBZbvji',
-                                   {version : 0});
+                                   {version: 0});
       assert(bnFactory(decoded).cmpn(1) === 0);
     });
   });
@@ -64,7 +68,7 @@ describe('Codec', function() {
     });
   });
   describe('encode', function() {
-    fixtures.ripple.forEach( test => {
+    fixtures.ripple.forEach(test => {
       it(`encodes "${test.hex}" to "${test.string}"`, function() {
         const encoded = encode(hexToByteArray(test.hex));
         assert.strictEqual(encoded, test.string);
@@ -73,8 +77,8 @@ describe('Codec', function() {
   });
   describe('Buffer encoding', function() {
     it('can encode zero address', function() {
-      var buf = new Buffer(TWENTY_ZEROES);
-      var encoded = encode(buf, {version: 0});
+      const buf = new Buffer(TWENTY_ZEROES);
+      const encoded = encode(buf, {version: 0});
       assert.equal(encoded, 'rrrrrrrrrrrrrrrrrrrrrhoLvTp');
     });
   });
@@ -111,11 +115,11 @@ describe('Codec', function() {
     it('returns the version passed in by reference', function() {
       const args = {versions: [VER_ED25519_SEED], expectedLength: 16};
       const decoded = decode('sEdTM1uX8pu2do5XvTnutH6HsouMaM2', args);
-      assert(decoded.version === VER_ED25519_SEED)
+      assert(decoded.version === VER_ED25519_SEED);
     });
   });
   describe('decode', function() {
-    fixtures.ripple.forEach( test => {
+    fixtures.ripple.forEach(test => {
       it(`decodes "${test.string}" to "${test.hex}"`, function() {
         const decoded = decode(test.string);
         assert.deepEqual(decoded, hexToByteArray(test.hex));

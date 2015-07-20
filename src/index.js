@@ -2,7 +2,6 @@
 
 const codecFactory = require('./address-codec');
 
-/*eslint-disable no-unused-vars*/
 const ALPHABETS = {
   bitcoin: '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz',
   ripple: 'rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz',
@@ -28,20 +27,26 @@ function addMethods(codecMethods, api) {
   return api;
 }
 
-function apiFactory(options) {
-  const Codec = codecFactory(options);
+function buildCodecsMap(alphabets, Codec) {
+  const codecs = {};
+  for (const name in ALPHABETS)
+    codecs[name] = new Codec(ALPHABETS[name]);
+  if (alphabets !== ALPHABETS) {
+    for (const name in alphabets)
+      codecs[name] = new Codec(alphabets[name]);
+  }
+  return codecs;
+}
 
+function apiFactory(options) {
   const {
       alphabets = ALPHABETS,
       codecMethods = {},
-      defaultAlphabet = alphabets === ALPHABETS ? 'bitcoin' :
-                            Object.keys(alphabets)[0]
+      defaultAlphabet = Object.keys(alphabets)[0]
   } = options;
 
-  /*eslint-enable no-unused-vars*/
-  const codecs = {};
-  for (const name in alphabets)
-    codecs[name] = new Codec(alphabets[name]);
+  const Codec = codecFactory(options);
+  const codecs = buildCodecsMap(alphabets, Codec);
 
   return addMethods(codecMethods, {
     Codec,
