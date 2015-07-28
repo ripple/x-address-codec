@@ -1,6 +1,6 @@
 {
   "name": "x-address-codec",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "crypto currency address codec",
   "files": [
     "dist/npm/*"
@@ -46,6 +46,6 @@
   },
   "readmeFilename": "README.md",
   "engines": {
-    "node": ">=0.10.0"
+    "node": ">=0.12.0"
   }
 }
