@@ -2,7 +2,7 @@
 
 const baseCodec = require('base-x');
 
-const {seqEqual, toArray, isSet} = require('./utils');
+const {seqEqual, concatArgs, isSet} = require('./utils');
 
 /* --------------------------------- ENCODER -------------------------------- */
 
@@ -51,7 +51,7 @@ class AddressCodec {
 
   encodeChecked(buffer) {
     const check = sha256(sha256(buffer)).slice(0, 4);
-    return this.encodeRaw(toArray(buffer, check));
+    return this.encodeRaw(concatArgs(buffer, check));
   }
 
   decodeChecked(encoded) {
@@ -66,7 +66,7 @@ class AddressCodec {
   }
 
   encodeVersioned(bytes, version) {
-    return this.encodeChecked(toArray(version, bytes));
+    return this.encodeChecked(concatArgs(version, bytes));
   }
 
   decodeVersioned(string, version) {

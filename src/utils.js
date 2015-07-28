@@ -13,23 +13,29 @@ function seqEqual(arr1, arr2) {
   return true;
 }
 
-// Concatenates args and/or contents of sequence conforming args to an Array.
-function toArray() {
-  const args = arguments;
-  if (args.length === 1 && Array.isArray(args[0])) {
-    return args[0];
-  }
+function isSequence(val) {
+  return val.length !== undefined;
+}
+
+/**
+* Concatenates all `arguments` into a single array. Each argument can be either
+* a single element or a sequence, which has a `length` property and supports
+* element retrieval via sequence[ix].
+*
+* > concatArgs(1, [2, 3], new Buffer([4,5]), new Uint8Array([6, 7]));
+*  [1,2,3,4,5,6,7]
+*/
+function concatArgs(...args) {
   const ret = [];
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg.length !== undefined) {
+  args.forEach((arg) => {
+    if (isSequence(arg)) {
       for (let j = 0; j < arg.length; j++) {
         ret.push(arg[j]);
       }
     } else {
       ret.push(arg);
     }
-  }
+  });
   return ret;
 }
 
@@ -39,6 +45,6 @@ function isSet(o) {
 
 module.exports = {
   seqEqual,
-  toArray,
+  concatArgs,
   isSet
 };
