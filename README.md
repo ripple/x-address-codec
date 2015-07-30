@@ -1,5 +1,7 @@
 # x-address-codec
 
+[![NPM](https://nodei.co/npm/x-address-codec.png)](https://npmjs.org/package/x-address-codec)
+
 [![Build Status](https://travis-ci.org/sublimator/x-address-codec.svg?branch=master)](https://travis-ci.org/sublimator/x-address-codec)
 
 This is a meta package, that exposes an api factory. It's really not as boring
