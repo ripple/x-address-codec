@@ -1,5 +1,7 @@
 # x-address-codec
 
+[![Build Status](https://travis-ci.org/sublimator/x-address-codec.svg?branch=master)](https://travis-ci.org/sublimator/x-address-codec)
+
 This is a meta package, that exposes an api factory. It's really not as boring
 as it sounds. We only ask you bring your own hash
 ([create-hash](https://www.npmjs.com/package/create-hash),
