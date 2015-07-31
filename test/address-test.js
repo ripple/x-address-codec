@@ -31,10 +31,56 @@ function hexToByteArray(hex) {
   return new Buffer(hex, 'hex').toJSON().data;
 }
 
-const options = {sha256, defaultAlphabet: 'ripple'};
-const {encode, decode, codecs: {ripple}} = apiFactory(options);
+const codecMethods = {
+  Test: {
+    versionTypes: ['one', 'two'],
+    versions: [1, 2],
+    expectedLength: 4
+  }
+};
+const options = {sha256, defaultAlphabet: 'ripple', codecMethods};
+const {
+  decodeTest,
+  encodeTest,
+  validateTest,
+  encode,
+  decode,
+  codecs: {ripple}
+} = apiFactory(options);
 
 describe('Codec', function() {
+  describe('findPrefix', function() {
+    it('can find the right version bytes to induce `sEd` for 16 byte payloads',
+        function() {
+      const version = ripple.findPrefix('sEd', 16);
+
+      // Fill an array of 16 bytes
+      const filled = _.fill(Array(16), 0xFF);
+
+      // For all values 0-255, set MSB to value, then encode
+      for (let i = 0; i < 0xFF; i++) {
+        filled[0] = i;
+        const encoded = encode(filled, {version});
+        // Check that sEd prefix was induced
+        assert.equal('sEd', encoded.slice(0, 3));
+      }
+
+      // This should already be filled with 0xFF, but for simple assuredness
+      _.fill(filled, 0xFF);
+      // For all values 0-255, set LSB to value, then encode
+      for (let i = 0; i < 0xFF; i++) {
+        filled[filled.length - 1] = i;
+        const encoded = encode(filled, {version});
+        assert.equal('sEd', encoded.slice(0, 3));
+      }
+
+      // The canonical version for sed25519 prefixes
+      assert(_.isEqual(version, VER_ED25519_SEED));
+    });
+  });
+});
+
+describe('apiFactory', function() {
   describe('encodeVersioned', function() {
     it('0', function() {
       const encoded = encode(digitArray('00000000000000000000'),
@@ -82,35 +128,6 @@ describe('Codec', function() {
       assert.equal(encoded, 'rrrrrrrrrrrrrrrrrrrrrhoLvTp');
     });
   });
-  describe('findPrefix', function() {
-    it('can find the right version bytes to induce `sEd` for 16 byte payloads',
-        function() {
-      const version = ripple.findPrefix('sEd', 16);
-
-      // Fill an array of 16 bytes
-      const filled = _.fill(Array(16), 0xFF);
-
-      // For all values 0-255, set MSB to value, then encode
-      for (let i = 0; i < 0xFF; i++) {
-        filled[0] = i;
-        const encoded = encode(filled, {version});
-        // Check that sEd prefix was induced
-        assert.equal('sEd', encoded.slice(0, 3));
-      }
-
-      // This should already be filled with 0xFF, but for simple assuredness
-      _.fill(filled, 0xFF);
-      // For all values 0-255, set LSB to value, then encode
-      for (let i = 0; i < 0xFF; i++) {
-        filled[filled.length - 1] = i;
-        const encoded = encode(filled, {version});
-        assert.equal('sEd', encoded.slice(0, 3));
-      }
-
-      // The canonical version for sed25519 prefixes
-      assert(_.isEqual(version, VER_ED25519_SEED));
-    });
-  });
   describe('decoding multiple versions', function() {
     it('returns the version passed in by reference', function() {
       const args = {versions: [VER_ED25519_SEED], expectedLength: 16};
@@ -124,6 +141,18 @@ describe('Codec', function() {
         const decoded = decode(test.string);
         assert.deepEqual(decoded, hexToByteArray(test.hex));
       });
+    });
+  });
+  describe('codecMethods', function() {
+    it('encode allows versions to be specified with a name', function() {
+      const encoded = encodeTest([1,2,3,4], 'two');
+      const decoded = decodeTest(encoded);
+      assert.equal(decoded.version, 2);
+    });
+    it('validate returns true when valid else false', function() {
+      const knownValid = 'p7oFVcrcqMhU';
+      assert(validateTest(knownValid));
+      assert(!validateTest(knownValid + 'p'));
     });
   });
 });

@@ -98,7 +98,7 @@ class AddressCodec {
     const versionBytes = withoutSum.slice(0, -payloadLength);
     const payload = withoutSum.slice(-payloadLength);
 
-    possibleVersions.some(function(version, i) {
+    const foundVersion = possibleVersions.some(function(version, i) {
       const asArray = Array.isArray(version) ? version : [version];
       if (seqEqual(versionBytes, asArray)) {
         ret.version = version;
@@ -110,7 +110,7 @@ class AddressCodec {
       }
     });
 
-    if (!ret.bytes) {
+    if (!foundVersion) {
       throw new Error('version_invalid');
     }
     return ret;

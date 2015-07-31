@@ -10,16 +10,28 @@ const ALPHABETS = {
 };
 
 function addMethods(codecMethods, api) {
-  function addVersion(name, args) {
+  function addVersion(name, opts) {
     function add(operation) {
-      api[operation + name] = function(string) {
-        return api[operation](string, args);
+      const encode = operation === 'encode';
+      const func = api[operation + name] = function(arg, arg2) {
+        let params = opts;
+        if (arg2 && encode) {
+          params = {version: opts.versions[opts.versionTypes.indexOf(arg2)]};
+        }
+        return api[operation](arg, params);
       };
+      return func;
     }
-    add('decode');
-    if (!args.versions) {
-      add('encode');
-    }
+    const decode = add('decode');
+    add('encode');
+    api['validate' + name] = function(arg) {
+      try {
+        decode(arg);
+      } catch (e) {
+        return false;
+      }
+      return true;
+    };
   }
   for (const k in codecMethods) {
     addVersion(k, codecMethods[k]);
