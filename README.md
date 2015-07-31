@@ -1,8 +1,6 @@
 # x-address-codec
 
-[![NPM](https://nodei.co/npm/x-address-codec.png)](https://npmjs.org/package/x-address-codec)
-
-[![Build Status](https://travis-ci.org/sublimator/x-address-codec.svg?branch=master)](https://travis-ci.org/sublimator/x-address-codec) [![Coverage Status](https://coveralls.io/repos/sublimator/x-address-codec/badge.svg?branch=master&service=github)](https://coveralls.io/github/sublimator/x-address-codec?branch=master)
+[![NPM](https://img.shields.io/npm/v/x-address-codec.svg)](https://npmjs.org/package/x-address-codec) [![Build Status](https://img.shields.io/travis/sublimator/x-address-codec/master.svg)](https://travis-ci.org/sublimator/x-address-codec) [![Coverage Status](https://img.shields.io/coveralls/sublimator/x-address-codec/master.svg)](https://coveralls.io/github/sublimator/x-address-codec?branch=master)
 
 This is a meta package, that exposes an api factory. It's really not as boring
 as it sounds. We only ask you bring your own hash

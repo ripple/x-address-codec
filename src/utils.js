@@ -24,6 +24,8 @@ function isSequence(val) {
 *
 * > concatArgs(1, [2, 3], new Buffer([4,5]), new Uint8Array([6, 7]));
 *  [1,2,3,4,5,6,7]
+*
+* @return {Array} - concatenated arguments
 */
 function concatArgs(...args) {
   const ret = [];

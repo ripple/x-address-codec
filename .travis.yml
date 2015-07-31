@@ -7,3 +7,4 @@ env:
 script:
   - npm test --coverage
   - npm run-script coveralls
+  - npm run-script lint
