@@ -1,6 +1,6 @@
 {
   "name": "x-address-codec",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "crypto currency address codec",
   "files": [
     "dist/npm/*"
