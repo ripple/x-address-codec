@@ -114,13 +114,13 @@ class AddressCodec {
       throw new Error('version_invalid');
     }
     return ret;
-  };
+  }
 
   verifyCheckSum(bytes) {
     const computed = sha256(sha256(bytes.slice(0, -4))).slice(0, 4);
     const checksum = bytes.slice(-4);
     return seqEqual(computed, checksum);
-  };
+  }
 
   /**
   * @param {String} desiredPrefix - desired prefix when base58 encoded with
