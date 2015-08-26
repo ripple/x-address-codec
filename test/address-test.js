@@ -42,7 +42,7 @@ const options = {sha256, defaultAlphabet: 'ripple', codecMethods};
 const {
   decodeTest,
   encodeTest,
-  validateTest,
+  isValidTest,
   encode,
   decode,
   codecs: {ripple}
@@ -145,14 +145,14 @@ describe('apiFactory', function() {
   });
   describe('codecMethods', function() {
     it('encode allows versions to be specified with a name', function() {
-      const encoded = encodeTest([1,2,3,4], 'two');
+      const encoded = encodeTest([1, 2, 3, 4], 'two');
       const decoded = decodeTest(encoded);
       assert.equal(decoded.version, 2);
     });
     it('validate returns true when valid else false', function() {
       const knownValid = 'p7oFVcrcqMhU';
-      assert(validateTest(knownValid));
-      assert(!validateTest(knownValid + 'p'));
+      assert(isValidTest(knownValid));
+      assert(!isValidTest(knownValid + 'p'));
     });
   });
 });

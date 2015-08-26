@@ -8,11 +8,11 @@ const {seqEqual, concatArgs, isSet} = require('./utils');
 
 function codecFactory(injected) {
 
-/*eslint-disable indent*/
+/* eslint-disable indent */
 const sha256 = injected.sha256;
 
 class AddressCodec {
-  /*eslint-enable indent*/
+  /* eslint-enable indent */
 
   constructor(alphabet) {
     this.alphabet = alphabet;
@@ -20,22 +20,22 @@ class AddressCodec {
     this.base = alphabet.length;
   }
 
-  encode(bytes, opts={}) {
+  encode(bytes, opts = {}) {
     const {version} = opts;
     return isSet(version) ?
-              this.encodeVersioned(bytes, version) :
+              this.encodeVersioned(bytes, version, opts.expectedLength) :
            opts.checked ?
               this.encodeChecked(bytes) :
               this.encodeRaw(bytes);
   }
 
-  decode(string, opts={}) {
+  decode(string, opts = {}) {
     const {version, versions} = opts;
     return isSet(versions) ?
               this.decodeMultiVersioned(
                   string, versions, opts.expectedLength, opts.versionTypes) :
            isSet(version) ?
-              this.decodeVersioned(string, version) :
+              this.decodeVersioned(string, version, opts.expectedLength) :
            opts.checked ?
               this.decodeChecked(string) :
               this.decodeRaw(string);
@@ -65,12 +65,15 @@ class AddressCodec {
     return buf.slice(0, -4);
   }
 
-  encodeVersioned(bytes, version) {
+  encodeVersioned(bytes, version, expectedLength) {
+    if (expectedLength && bytes.length !== expectedLength) {
+      throw new Error('unexpected_payload_length');
+    }
     return this.encodeChecked(concatArgs(version, bytes));
   }
 
-  decodeVersioned(string, version) {
-    return this.decodeMultiVersioned(string, [version]).bytes;
+  decodeVersioned(string, version, expectedLength) {
+    return this.decodeMultiVersioned(string, [version], expectedLength).bytes;
   }
 
   /**
@@ -78,7 +81,7 @@ class AddressCodec {
   * @param {Array} possibleVersions - array of possible versions.
   *                                   Each element could be a single byte or an
   *                                   array of bytes.
-  * @param {Number} expectedLength - of decoded bytes minus checksum
+  * @param {Number} [expectedLength] - of decoded bytes minus checksum
   *
   * @param {Array} [types] - parrallel array of names matching possibleVersions
   *
@@ -113,6 +116,10 @@ class AddressCodec {
     if (!foundVersion) {
       throw new Error('version_invalid');
     }
+    if (expectedLength && ret.bytes.length !== expectedLength) {
+      throw new Error('unexpected_payload_length');
+    }
+
     return ret;
   }
 
@@ -144,9 +151,9 @@ class AddressCodec {
   }
 }
 
-/*eslint-disable indent*/
+/* eslint-disable indent */
 return AddressCodec;
-/*eslint-enable indent*/
+/* eslint-enable indent */
 }
 /* ------------------------------- END ENCODER ------------------------------ */
 

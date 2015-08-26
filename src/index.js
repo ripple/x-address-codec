@@ -16,7 +16,10 @@ function addMethods(codecMethods, api) {
       const func = api[operation + name] = function(arg, arg2) {
         let params = opts;
         if (arg2 && encode) {
-          params = {version: opts.versions[opts.versionTypes.indexOf(arg2)]};
+          params = {
+            expectedLength: opts.expectedLength,
+            version: opts.versions[opts.versionTypes.indexOf(arg2)]
+          };
         }
         return api[operation](arg, params);
       };
@@ -24,7 +27,7 @@ function addMethods(codecMethods, api) {
     }
     const decode = add('decode');
     add('encode');
-    api['validate' + name] = function(arg) {
+    api['isValid' + name] = function(arg) {
       try {
         decode(arg);
       } catch (e) {
@@ -52,9 +55,9 @@ function buildCodecsMap(alphabets, Codec) {
 
 function apiFactory(options) {
   const {
-      alphabets = ALPHABETS,
-      codecMethods = {},
-      defaultAlphabet = Object.keys(alphabets)[0]
+    alphabets = ALPHABETS,
+    codecMethods = {},
+    defaultAlphabet = Object.keys(alphabets)[0]
   } = options;
 
   const Codec = codecFactory(options);
@@ -63,11 +66,11 @@ function apiFactory(options) {
   return addMethods(codecMethods, {
     Codec,
     codecs,
-    decode: function(string, opts={}) {
+    decode: function(string, opts = {}) {
       const {alphabet = defaultAlphabet} = opts;
       return codecs[alphabet].decode(string, opts);
     },
-    encode: function(bytes, opts={}) {
+    encode: function(bytes, opts = {}) {
       const {alphabet = defaultAlphabet} = opts;
       return codecs[alphabet].encode(bytes, opts);
     }
