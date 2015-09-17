@@ -42,7 +42,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/sublimator/x-address-codec.git"
+    "url": "git://github.com/ripple/x-address-codec.git"
   },
   "readmeFilename": "README.md",
   "engines": {

@@ -1,10 +1,6 @@
 language: node_js
 node_js:
 - '0.12'
-env:
-  global:
-    secure: DMguM2I8MMyzR708LaZQXtWjC5HdIYU+eddnym4FkTTmHsU2To6b0Qa1NqzZLFpLXl9m6zWCrRtf7kKafmPh+BQeUThAoHPVy450yiW5NdBwWcT0onJGiqhcnC9cFpOUzKzCsidg8BrLiain24alrMaVTX2TIq8xbotiIeajYeuriUkWPgj3nzW8lyYTsGxjzrGcRx5Bi50sY9in+0kWIWAwvLPkIaj3JH6LJTonMtOjQtp4DKuiG62yYZaC/yw4r52E27t8yc05yVMJDo49SIEVHc5Odf/7V3/WMwSP5Opyh+JH6GFBFAUcM1WMfTHMex4CHuYIGm30TySBh8XlFrnzkknatvYYUqGP2Zrs9rAYhQSB9Pv0IdVzAuN6BN3G08vMWjhqdRgJx7rOp3UeNSDP2RL5UsXSGrg+Ls4nOQotITHa8fRUqRyjxWma05tl2PBR+pGE/1sF2JZkKz8/NOmZyTEWXT1FX6VZBmX6APP8rmiczEX34HnL9IeMU4xzvL9G8l2o/uCEOJsmAuDo289Z+5axfZUj1WWozbHgqB4K8fukehquRbaYw6lO6SWj9+PTTJUOVJvUcN/v3qGWhjijd5PWtOnBkc4Ar2igjnL36FAcjUfxiivU5o93pP3ZobQwf7s7XTIqK3BfPY8BpRImtWAjhu/iLVt0gEzrMhw=
 script:
   - npm test --coverage
-  - npm run-script coveralls
   - npm run-script lint
