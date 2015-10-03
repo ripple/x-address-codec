@@ -1,4 +1,4 @@
-# x-address-codec
+# x-address-codec [![NPM](https://img.shields.io/npm/v/x-address-codec.svg)](https://npmjs.org/package/x-address-codec) [![Build Status](https://img.shields.io/travis/ripple/x-address-codec/master.svg)](https://travis-ci.org/ripple/x-address-codec) [![codecov.io](http://codecov.io/github/ripple/x-address-codec/coverage.svg?branch=master)](http://codecov.io/github/ripple/x-address-codec?branch=master)
 
 This is a meta package, that exposes an api factory. It's really not as boring
 as it sounds. We only ask you bring your own hash
