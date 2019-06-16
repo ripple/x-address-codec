@@ -1,33 +1,36 @@
 'use strict';
 /*eslint-disable comma-spacing*/
 
-const hash = require('hash.js');
-const BN = require('bn.js');
-const _ = require('lodash');
-const assert = require('assert');
-const fixtures = require('./fixtures/base58.json');
-const apiFactory = require('../src');
+import * as crypto from 'crypto'
+
+import apiFactory from '../src'
+import fixtures from './fixtures/base58.json'
+import assert from 'assert'
+import * as _ from 'lodash'
+import BN from 'bn.js'
+import { IndexedBytes } from '../src/utils'
+import { BinaryLike } from 'crypto'
 
 const VER_ED25519_SEED = [1, 225, 75];
 const TWENTY_ZEROES = [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0];
 
 /*eslint-enable comma-spacing*/
 
-function sha256(bytes) {
-  return hash.sha256().update(bytes).digest();
+function sha256(bytes: IndexedBytes) {
+  return crypto.createHash('sha256').update(bytes as BinaryLike).digest();
 }
 
-function digitArray(str) {
+function digitArray(str: string) {
   return str.split('').map(function(d) {
     return parseInt(d, 10);
   });
 }
 
-function bnFactory(bytes) {
+function bnFactory(bytes: any) {
   return new BN(bytes, 'be');
 }
 
-function hexToByteArray(hex) {
+function hexToByteArray(hex: string) {
   return new Buffer(hex, 'hex').toJSON().data;
 }
 
@@ -48,6 +51,41 @@ const {
   codecs: {ripple}
 } = apiFactory(options);
 
+describe('TaggedAddresses', () => {
+  const BITSTAMP_ADDY = 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B'
+  const prefix = BITSTAMP_ADDY + 'xTag'
+
+  const tests: Array<[string, Buffer, string]> = [
+    ['ascii', Buffer.from('have a nice day'), 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxTagPNAPU7ciRU8gdfeERp35pCuNXLnbv'],
+    ['hex', Buffer.from('0102030405', 'hex'), 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxTagVD8LksB1Yj5Byv8j'],
+    ['ascii', Buffer.from('OK!'), 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxTag7wdtDQHTVCXmY'],
+    ['utf8', Buffer.alloc(358, 97),
+      'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxTagVGZBRZ4SD5vt8aUkZocdcAPBTxevtuCKSVVxHUh4USN' +
+      'NWaZPiLmgNR8kfyLTjKbgcCFbQibpmaLXgBSVBh8UiMRhbEJ6145KkK6Q5PpbkMVRyRwqcy68ezdq5DX' +
+      'fb1btFmPcDHyT2BxaUc7CZ2rLiFcArM9X7aaxjoPeWHPWoSABqYgLgiiDWGNo1anHtnrzbnAQrektKtq' +
+      'BDzaey7iCq7pa6hUDQJa8tRa1ApHHDAAkG4VD3ZBCQRUWeGa6Gf6brorPRDNv1yKUCGmfLJzkVNf8qdU' +
+      '8Xi6X3ipVxiPiu3mv6972KYRpaYV7out1ZukRWEzrCsc5QG85Aun8YG9HrvuZdMzM8X9CTeUgFDHzWt7' +
+      'PXpg2SX68YNU25pNej1X86HjyD5a2Dmbr8P72p1dosocYyzKs3EQ1WHCV9jQ6XFf5k2TE3R1roHvvXmn' +
+      'kbwmdJk9RSyP25c6uYwZkFPCYSnakgLLL2bNHdGLEZww4S6ewMThcbKhpn']
+  ]
+
+  // for (let i = 0; i < 2000; i++) {
+  //   tests.push(['hex', crypto.randomBytes(_.random(5, 2000, false))])
+  // }
+
+  tests.forEach(([encoding, buf, expectedTagged]) => {
+    it(`should sanity cycle \`${buf.toString(encoding)}\``, function () {
+      const tagged = ripple.encodeTagged(prefix, buf)
+      assert.strictEqual(tagged, expectedTagged)
+      assert(tagged.startsWith(prefix))
+      const {address, tags} = ripple.decodeTagged(tagged)
+      assert.strictEqual(address, prefix)
+      assert(tags.equals(buf))
+      // console.log('tagged=', tagged)
+    })
+  })
+})
+
 describe('Codec', function() {
   describe('findPrefix', function() {
     it('can find the right version bytes to induce `sEd` for 16 byte payloads',
@@ -62,7 +100,7 @@ describe('Codec', function() {
         filled[0] = i;
         const encoded = encode(filled, {version});
         // Check that sEd prefix was induced
-        assert.equal('sEd', encoded.slice(0, 3));
+        assert.strictEqual('sEd', encoded.slice(0, 3));
       }
 
       // This should already be filled with 0xFF, but for simple assuredness
@@ -71,11 +109,11 @@ describe('Codec', function() {
       for (let i = 0; i < 0xFF; i++) {
         filled[filled.length - 1] = i;
         const encoded = encode(filled, {version});
-        assert.equal('sEd', encoded.slice(0, 3));
+        assert.strictEqual('sEd', encoded.slice(0, 3));
       }
 
       // The canonical version for sed25519 prefixes
-      assert(_.isEqual(version, VER_ED25519_SEED));
+      assert(Buffer.from(VER_ED25519_SEED).equals(version));
     });
   });
 });
@@ -125,7 +163,7 @@ describe('apiFactory', function() {
     it('can encode zero address', function() {
       const buf = new Buffer(TWENTY_ZEROES);
       const encoded = encode(buf, {version: 0});
-      assert.equal(encoded, 'rrrrrrrrrrrrrrrrrrrrrhoLvTp');
+      assert.strictEqual(encoded, 'rrrrrrrrrrrrrrrrrrrrrhoLvTp');
     });
   });
   describe('decoding multiple versions', function() {
@@ -147,7 +185,7 @@ describe('apiFactory', function() {
     it('encode allows versions to be specified with a name', function() {
       const encoded = encodeTest([1, 2, 3, 4], 'two');
       const decoded = decodeTest(encoded);
-      assert.equal(decoded.version, 2);
+      assert.strictEqual(decoded.version, 2);
     });
     it('validate returns true when valid else false', function() {
       const knownValid = 'p7oFVcrcqMhU';
