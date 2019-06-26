@@ -141,22 +141,25 @@ export class AddressCodec {
     return ret
   }
 
-  encodeTagged(address: string, tags: IndexedBytes) {
+  encodeTagged(address: string, tags: IndexedBytes, suffix = '') {
     const asBuffer = Buffer.from(tags as any)
     const writer = new OerWriter()
     writer.writeUInt8(address.length)
+    writer.writeUInt8(suffix.length)
     writer.writeVarOctetString(asBuffer)
     const reversed = writer.getBuffer().reverse()
-    const prefix = this.findPrefix(address, reversed.length)
-    console.log('prefix', prefix)
+    const prefix = this.findPrefix(address + suffix, reversed.length, reversed)
     return this.encodeVersioned(reversed, prefix, reversed.length)
   }
 
   decodeTagged(tagged: string) {
     const decoded = this.decodeChecked(tagged).reverse()
     const reader = new OerReader(decoded)
+    const addressLength = reader.readUInt8Number()
+    const suffixLength = reader.readUInt8Number()
     return {
-      address: tagged.slice(0, reader.readUInt8Number()),
+      address: tagged.slice(0, addressLength),
+      suffix: tagged.slice(addressLength, addressLength + suffixLength),
       tags: reader.readVarOctetString()
     }
   }
@@ -171,9 +174,10 @@ export class AddressCodec {
    * @param {String} desiredPrefix - desired prefix when base58 encoded with
    *                                 checksum
    * @param {Number} payloadLength - number of bytes encoded not incl checksum
+   * @param payload - TODO
    * @return {Array} version
    */
-  findPrefix (desiredPrefix: string, payloadLength: number) {
+  findPrefix (desiredPrefix: string, payloadLength: number, payload?: Buffer) {
     if (this.base !== 58) {
       throw new Error('Only works for base58')
     }
@@ -185,7 +189,12 @@ export class AddressCodec {
       // (x, x.8] -> x+1, (x.8, x+1) -> x+2
       const requiredChars = Math.ceil(chars + 0.2)
       const padding = this.alphabet[Math.floor(this.alphabet.length / 2) - 1]
-      console.log('padding', padding)
+
+      // if (payload) {
+      //   let rawLength = this.encodeRaw(payload!).length
+      //   console.log('equi', (rawLength + 4) === requiredChars, rawLength, requiredChars)
+      // }
+
       const template =
         desiredPrefix + new Array(requiredChars + 1).join(padding)
       const bytes = this.decodeRaw(template)
