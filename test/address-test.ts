@@ -53,44 +53,54 @@ const {
 
 describe('TaggedAddresses', () => {
   const BITSTAMP_ADDY =  'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B'
-  const prefix = BITSTAMP_ADDY
-  const humanSuffix = 'desTinaTionTag13371337'
 
-  const tests: Array<[string, Buffer, string|null]> = [
-    ['ascii', Buffer.from('have a nice day'),
-      'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BdesTinaTionTag13371337V4tk5NM8LpYe9W4t89nE1XoD8jDcjd2'],
-    ['hex', Buffer.from('0102030405', 'hex'),
-      'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BdesTinaTionTag133713377LLXw2eHGZWDre6ah'],
-    ['ascii', Buffer.from('OK!'), 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BdesTinaTionTag133713374TkgKBF3zsAi1G'],
-    ['utf8', Buffer.alloc(358, 0), null],
-      ['utf8', Buffer.alloc(358, 97),
-        'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BdesTinaTionTag13371337WspJoQ2sYaaERScUvTdFxQCf' +
-        'txRj7htGfm5dY46BNYdTmwG6xxF76MpDBhRt1iQjhxHAB3qDMvwcHf7E75vrPk8MCtrpWU6Y7wHVbsb' +
-        '9iyGtXDXAGzK1n814JXWRqQtGfA9mWSYKaBJf5oRSNWgeGwrLuDq7mHoFjKBVXGVpbpNtxT9S1rFvJL' +
-        '2js3emXV9Y8VSc5XdkZQvtZ1aAFR7iqvmrnKTXMtUGLvjoyeV2pfDfGQz3NDYBAnBJNLcsA5FonEtmX' +
-        '8vueEFTcR6eGyvfmNTRkVC5F92vTsW9FwE2WPaH2wcBeAnwQ8cWfVBUWobwwQ8b4HgAgu6oZGKpHFkD' +
-        '2LPydsW71PpKbxKYaQVmzBkMK6ppqqFN2i3vBuuTZeyQJaCGwrV9Tt6x42S7KG5KGpKkXG1SazforPH' +
-        'dKczFsDuig9QgUpkEYLZFT9kn46h4pMPThXMnFAEAsMMXdffDTW37Rj2i9yAjZhR9jwqjrj5LH3aa3P' +
-        'z7Jj'
-      ]
+  const testHumanPrefix = ''
+  let join = 'xXx'
+  const destTagHumanSuffix = join +
+    'desT' +
+    '13371337' +
+    join +
+    'netTest' +
+    join
+  const expiresBuffer = Buffer.alloc(4)
+  expiresBuffer.writeUInt32BE(1561571390, 0)
+
+  const tests: Array<[string, Buffer]> = [
+    ['ascii', Buffer.from('have a nice day')],
+    ['hex', Buffer.from('0102030405', 'hex')],
+    ['ascii', Buffer.from('OK!')],
+    ['utf8', Buffer.alloc(358, 0)],
+    ['utf8', Buffer.alloc(358, 97)],
+    ['hex', expiresBuffer]
   ]
 
-  // for (let i = 0; i < 100e3; i++) {
-  //   tests.push(['hex', crypto.randomBytes(_.random(5, 2000, false)), null])
-  // }
+  const expectedResults: string[] = [
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXxXxJj8DSyTcTM4u4emm9W4no1ia4gxoZe',
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXxQAvXEg9eBK8KiRSbLn',
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXx7YbhSoCipKC1yTTM',
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXxMse3nKqmh6CbbxjGiLr7Cmfn7YQkkC5Sb9urkvs74hfhefsfCFYdSgkGihYnBt3e1hQteuSL2JKJ4T6FjZB3kRqiiy4TTjZmGByQsN37Z4TfSuEUPanRquCiyYdCuvkP3r89HUP1VHNr4ZvDCgV2LnV517ijMHvhuJ6aBFARPuLrhMnDS81w15MPHzD1YXHBMdoAEgRUa9unjL7Q1tyX4eaSha4tgDUUJthpNveFkY7dGmSJxPCk46PNYTkKE6aEKHfFTQuKQu3jrARjyzkSJMqAD3JcaPi7ohtXEthRPdNNvvMZjQehDs291tgvAJZi3g5qDtgGbR7BzSdEvgi9xP6JtniXeVmDP8CsHe7mgTUEoD2fPiTU433fRwx8dkbekEQGsTieYvmS9q749LxfE12iVCw3Xh2GTeDE3JoMHqqiaWMWQGZ3w3gKxm6HG5mymje9P5Y12NDoMJFtmgGaZXpDoWZiyNhC4pXFixG6opNn1CHVVzxQ5tS',
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXxQmyBcJFnDeszpJQfWUrFJcZ9tyKkyyxaKGgmmH5AjaZj6u25JkMWbdEhaN9egTnjdTsHRBYJAswY46hLYDP7FZA3n1DnSTrmzqkm776m5FnfMPCBuKouY1QfkjzVSjteJ1RebpvTGKdaazSQWRfQesVjS8SjfZWtUxGgVhTpQ7bzxLKfbtrz5H9CsLHUubeaii6NHHAV1DFmkGLTYoLgeN9RLtpuBGpgEJXWn4Y7e5K1vNiqLtomcaFnKYzYXqLJgcVjXZdzXqqTKv8PcuLorYHd9Rg86jeFopXjWzhPVJMRjmFB7nw3F6Grsiw3gokyWHX7NBZ9VZZBrbMHRFVjhDjMDqPmUYeLF3CzLApVb7mpvSzCQGJ4yKSsGuTPwjebrYZbi3zGN8KL6ooPtcRhbbfFGNaMGrwasUbu39KNYUUciHNQ4hyR9cSGQab8CvBED8Y3gKgFVC7ymFPxobbnd6zww8b1d1b4HLSBLCHhEDEWe79XQ7CcpSq',
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXx74tuQofhdLD2UWMxb',
+  ]
 
-  tests.forEach(([encoding, invisible, expectedTagged]) => {
-    it(`should sanity cycle \`${invisible.toString(encoding)}\``, function () {
-      const tagged = ripple.encodeTagged(prefix, invisible, humanSuffix)
-      if (expectedTagged) {
-        // assert.strictEqual(tagged, expectedTagged)
+  tests.forEach(([encoding, invisibleInEncoding], index) => {
+    it(`should sanity cycle \`${invisibleInEncoding.toString(encoding)}\``, function () {
+      const tagged = ripple.encodeTagged({
+        address: BITSTAMP_ADDY,
+        humanPrefix: testHumanPrefix,
+        data: invisibleInEncoding,
+        humanSuffix: destTagHumanSuffix})
+      const expected = expectedResults[index]
+      if (expected) {
+        assert.strictEqual(tagged, expected)
       }
-      assert(tagged.startsWith(prefix))
-      const {address, tags, suffix} = ripple.decodeTagged(tagged)
-      assert.strictEqual(address, prefix)
-      assert.strictEqual(suffix, humanSuffix)
-      assert(tags.equals(invisible))
-      console.log('tagged=', tagged)
+      assert(tagged.startsWith(testHumanPrefix + BITSTAMP_ADDY + destTagHumanSuffix))
+      const {address, data, humanSuffix, humanPrefix} = ripple.decodeTagged(tagged)
+      assert.strictEqual(humanPrefix, testHumanPrefix)
+      assert.strictEqual(address, BITSTAMP_ADDY)
+      assert.strictEqual(humanSuffix, destTagHumanSuffix)
+      assert(data.equals(invisibleInEncoding))
+      console.log(`'${tagged}',`)
     })
   })
 })

@@ -18,6 +18,13 @@ export type EncodeOptions = { version?: VersionArgument, checked?: boolean, expe
 
 export type Sha256Function = (byteIndexed: IndexedBytes) => Buffer
 
+export interface IEncodeTaggedParameters {
+  address: string;
+  data?: IndexedBytes;
+  humanSuffix?: string;
+  humanPrefix?: string;
+}
+
 export class AddressCodec {
   private readonly codec: BaseXCodec
   private readonly base: number
@@ -141,26 +148,36 @@ export class AddressCodec {
     return ret
   }
 
-  encodeTagged(address: string, tags: IndexedBytes, suffix = '') {
-    const asBuffer = Buffer.from(tags as any)
+  encodeTagged({humanPrefix = '', address, humanSuffix = '', data=[]}: IEncodeTaggedParameters) {
+    const asBuffer = Buffer.from(data as any)
+    // Could create minimal version of this.
+    // Just needs to encode var octet strings
     const writer = new OerWriter()
+
+    writer.writeUInt8(humanPrefix.length)
     writer.writeUInt8(address.length)
-    writer.writeUInt8(suffix.length)
+    writer.writeUInt8(humanSuffix.length)
     writer.writeVarOctetString(asBuffer)
+
     const reversed = writer.getBuffer().reverse()
-    const prefix = this.findPrefix(address + suffix, reversed.length, reversed)
-    return this.encodeVersioned(reversed, prefix, reversed.length)
+    const prefixBytes = this.findPrefix(humanPrefix + address + humanSuffix, reversed.length, reversed)
+    return this.encodeVersioned(reversed, prefixBytes, reversed.length)
   }
 
   decodeTagged(tagged: string) {
     const decoded = this.decodeChecked(tagged).reverse()
     const reader = new OerReader(decoded)
+
+    const prefixLength = reader.readUInt8Number()
     const addressLength = reader.readUInt8Number()
     const suffixLength = reader.readUInt8Number()
+    const addressEnd = prefixLength + addressLength
+
     return {
-      address: tagged.slice(0, addressLength),
-      suffix: tagged.slice(addressLength, addressLength + suffixLength),
-      tags: reader.readVarOctetString()
+      address: tagged.slice(prefixLength, addressEnd),
+      humanPrefix: tagged.slice(0, prefixLength),
+      humanSuffix: tagged.slice(addressEnd, addressEnd + suffixLength),
+      data: reader.readVarOctetString()
     }
   }
 
