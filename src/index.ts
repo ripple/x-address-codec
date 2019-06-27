@@ -48,7 +48,7 @@ function addMethods (codecMethods: Record<string, CodecMethodOptions>, api: any)
   return api
 }
 
-function buildCodecsMap (alphabets: Record<string, string>, sha256: Sha256Function) {
+function buildCodecsMap (alphabets: Record<string, string>, sha256: Sha256Function): Record<string, AddressCodec> {
   const codecs: Record<string, AddressCodec> = {}
   for (const name of Object.keys(ALPHABETS)) {
     codecs[name] = new AddressCodec(ALPHABETS[name], sha256)

@@ -35,6 +35,10 @@ function hexToByteArray(hex: string) {
 }
 
 const codecMethods = {
+  AccountID: {
+    version: 0,
+    expectedLength: 20,
+  },
   Test: {
     versionTypes: ['one', 'two'],
     versions: [1, 2],
@@ -44,6 +48,7 @@ const codecMethods = {
 const options = {sha256, defaultAlphabet: 'ripple', codecMethods};
 const {
   decodeTest,
+  decodeAccountID,
   encodeTest,
   isValidTest,
   encode,
@@ -51,18 +56,65 @@ const {
   codecs: {ripple}
 } = apiFactory(options);
 
+
+type PairsType = Record<string, string>
+
+function encodeLength(val: string) {
+  if (val.length > 57) {
+    throw new Error('Max length is 57 chars')
+  }
+  return ripple.alphabet[val.length]
+}
+
+
+function encodePairs(pairs: PairsType, join='') {
+  return join + Object.keys(pairs).map(
+    key => {
+      const val = pairs[key]
+      return encodeLength(key) + encodeLength(val) + key + val
+    }
+  ).join(join) + join
+}
+
+function decodePairs(encoded: string, join='') {
+  let ix = 0
+  const decoded: PairsType = {}
+  while (ix < encoded.length) {
+    ix += join.length
+    if (ix === encoded.length) {
+      break
+    }
+
+    const keyLen = ripple.alphabet.indexOf(encoded[ix])
+    const valLen = ripple.alphabet.indexOf(encoded[ix + 1])
+    const  keyStarts = ix + 2
+
+    const keyEnds = keyStarts + keyLen
+    const valEnds = keyEnds + valLen
+
+    const key = encoded.slice(keyStarts, keyEnds)
+    const val = encoded.slice(keyEnds, valEnds)
+
+    ix = valEnds
+    decoded[key] = val
+  }
+  return decoded
+}
+
 describe('TaggedAddresses', () => {
   const BITSTAMP_ADDY =  'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B'
 
-  const testHumanPrefix = ''
-  let join = 'xXx'
-  const destTagHumanSuffix = join +
-    'desT' +
-    '13371337' +
-    join +
-    'netTest' +
-    join
+  const join = ''
+  // pairs of arbitrary strings composed of ripple alphabet chars
+  const pairs = {
+    destinationTag: '13371337o',
+    subLimator: 'isCrazy'
+  }
+
+  const testHumanPrefix = 'XP' // Extended Production Address
+  const testHumanSuffix = encodePairs(pairs, join)
   const expiresBuffer = Buffer.alloc(4)
+  // You could use
   expiresBuffer.writeUInt32BE(1561571390, 0)
 
   const tests: Array<[string, Buffer]> = [
@@ -75,12 +127,71 @@ describe('TaggedAddresses', () => {
   ]
 
   const expectedResults: string[] = [
-    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXxXxJj8DSyTcTM4u4emm9W4no1ia4gxoZe',
-    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXxQAvXEg9eBK8KiRSbLn',
-    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXx7YbhSoCipKC1yTTM',
-    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXxMse3nKqmh6CbbxjGiLr7Cmfn7YQkkC5Sb9urkvs74hfhefsfCFYdSgkGihYnBt3e1hQteuSL2JKJ4T6FjZB3kRqiiy4TTjZmGByQsN37Z4TfSuEUPanRquCiyYdCuvkP3r89HUP1VHNr4ZvDCgV2LnV517ijMHvhuJ6aBFARPuLrhMnDS81w15MPHzD1YXHBMdoAEgRUa9unjL7Q1tyX4eaSha4tgDUUJthpNveFkY7dGmSJxPCk46PNYTkKE6aEKHfFTQuKQu3jrARjyzkSJMqAD3JcaPi7ohtXEthRPdNNvvMZjQehDs291tgvAJZi3g5qDtgGbR7BzSdEvgi9xP6JtniXeVmDP8CsHe7mgTUEoD2fPiTU433fRwx8dkbekEQGsTieYvmS9q749LxfE12iVCw3Xh2GTeDE3JoMHqqiaWMWQGZ3w3gKxm6HG5mymje9P5Y12NDoMJFtmgGaZXpDoWZiyNhC4pXFixG6opNn1CHVVzxQ5tS',
-    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXxQmyBcJFnDeszpJQfWUrFJcZ9tyKkyyxaKGgmmH5AjaZj6u25JkMWbdEhaN9egTnjdTsHRBYJAswY46hLYDP7FZA3n1DnSTrmzqkm776m5FnfMPCBuKouY1QfkjzVSjteJ1RebpvTGKdaazSQWRfQesVjS8SjfZWtUxGgVhTpQ7bzxLKfbtrz5H9CsLHUubeaii6NHHAV1DFmkGLTYoLgeN9RLtpuBGpgEJXWn4Y7e5K1vNiqLtomcaFnKYzYXqLJgcVjXZdzXqqTKv8PcuLorYHd9Rg86jeFopXjWzhPVJMRjmFB7nw3F6Grsiw3gokyWHX7NBZ9VZZBrbMHRFVjhDjMDqPmUYeLF3CzLApVb7mpvSzCQGJ4yKSsGuTPwjebrYZbi3zGN8KL6ooPtcRhbbfFGNaMGrwasUbu39KNYUUciHNQ4hyR9cSGQab8CvBED8Y3gKgFVC7ymFPxobbnd6zww8b1d1b4HLSBLCHhEDEWe79XQ7CcpSq',
-    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59BxXxdesT13371337xXxnetTestxXx74tuQofhdLD2UWMxb',
+    'X' + // XTended
+    'P' + // Production address
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B' +
+    // pairs of arbitrary strings composed of ripple alphabet chars
+    'Ew' + // Key + Value length bytes
+    'destinationTag' +
+    '13371337o' +
+    'B3' +
+    'subLimator' +
+    'isCrazy' +
+    // Whatever the damn hell 'invisible' data you want, DER, BER-TLV
+    'TvuPBxoVDCu4aXZYLdJbV9ftn6yg3PST',
+
+    'XP' +
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B' +
+    'Ew' +
+    'destinationTag' +
+    '13371337o' +
+    'B3' +
+    'subLimator' +
+    'isCrazy' +
+    '98a3NArhtHdwuk2NG2',
+
+
+    'XP' +
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B' +
+    'Ew' +
+    'destinationTag' +
+    '13371337o' +
+    'B3' +
+    'subLimator' +
+    'isCrazy' +
+    '7d2sdJ9kbf7MGtw4',
+
+
+    'XP' +
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B' +
+    'Ew' +
+    'destinationTag' +
+    '13371337o' +
+    'B3' +
+    'subLimator' +
+    'isCrazy' +
+    'QT3EV8VodFo8jwhEUN9BXGqMrJhKauXgByboEN1XX8ZsRua5Pboo3rd5nRCjCBaazucDRrQaWVkF72HtRGkMfT8MEPjHoRSirQ376fDJFZHMgBiFfvd517VqK73JJB4fa5ccYfBKv141poifsHPpZoM6ryew3ZQmYbytL4xrBYikaCyqyNNBSL2fzoFV6eo2ynDLHu1V7pd57yn1c4nRizqrfHdNAudAHEmzyoBopnUqmwntabKHho8G5qnx2XFskxP4g6xeQLfBv75g9NhesJ7ZzEABwjoMRNengNvzSi1ZepWKybxkgmhHcMQbVaKSvyKd7ijaZ4Tyew2tzsGAPfvywKR3bgT5TDvNP5dFickgPp1gDk1g2uDkPfRBYAJnjNF7aruED3UrdTxtauzTEbqnaWtVTmgnQGYKM2K1GkBCMBnaiJXu3E5NPSAuEm1HyK9VEkT2JyDDcjYsFibJbwGhXbZaMDN2YE2gpSCPPvwmjJ7LQ9KGx7c',
+
+
+    'XP' +
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B' +
+    'Ew' +
+    'destinationTag' +
+    '13371337o' +
+    'B3' +
+    'subLimator' +
+    'isCrazy' +
+    '7BTKpm7f8mUB9Vjnia9Xw3HRR5yKLDmKvaPZEcYztqr5V6eKpXcgGx3VKbHK9ksBmJNcBHWh1Nch7oeQDvx6Bb1c7HZu83tiksui3M8byzuM2gGoew4U2SNaaCVfFzW4H2GfqA6u6umAmN4Htrzi1mM6bHN9tqr2iEZ7dcTcU33jzCDk3KPrGu4Pk91qhjwW7JadKXPoEaZQVtAvHGSb321zQnHESx7RDgE7FEnSvEhaQdWQVaTJJDDfVvLBighf3HmHki6KXGovN7nK83ezk7vEvZKM8nb6RUHHALvxYXzkS1xA5G7qJQk38J1oNbW2J23GV9byTWYxCKJvVwvW7AyrWhx49jLq1ZABTrBYmeKTWGJNNw51UaXgNqu8nvMrzXyot6pityjvBSHuiBTQbK4p1nF5U5EtyFvyMQqkXaYSaAAzFaxUfj7wFmiQeyGZR4s7YMbXNQ7QsEffimvHCMDzt1bfrimHTZVpW9CjifUUWfL4JbNmg84',
+
+    'XP' +
+    'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B' +
+    'Ew' +
+    'destinationTag' +
+    '13371337o' +
+    'B3' +
+    'subLimator' +
+    'isCrazy' +
+    'WU2UHCTkynRSryXnp',
   ]
 
   tests.forEach(([encoding, invisibleInEncoding], index) => {
@@ -89,17 +200,20 @@ describe('TaggedAddresses', () => {
         address: BITSTAMP_ADDY,
         humanPrefix: testHumanPrefix,
         data: invisibleInEncoding,
-        humanSuffix: destTagHumanSuffix})
+        humanSuffix: testHumanSuffix})
       const expected = expectedResults[index]
       if (expected) {
         assert.strictEqual(tagged, expected)
       }
-      assert(tagged.startsWith(testHumanPrefix + BITSTAMP_ADDY + destTagHumanSuffix))
-      const {address, data, humanSuffix, humanPrefix} = ripple.decodeTagged(tagged)
+      assert(tagged.startsWith(testHumanPrefix + BITSTAMP_ADDY + testHumanSuffix))
+      const {address, data, rawBytes, humanSuffix, humanPrefix} = ripple.decodeTagged(tagged)
+
       assert.strictEqual(humanPrefix, testHumanPrefix)
       assert.strictEqual(address, BITSTAMP_ADDY)
-      assert.strictEqual(humanSuffix, destTagHumanSuffix)
+      assert.strictEqual(humanSuffix, testHumanSuffix)
       assert(data.equals(invisibleInEncoding))
+      const decodedPairs = decodePairs(humanSuffix, join)
+      assert.deepStrictEqual(decodedPairs, pairs)
       console.log(`'${tagged}',`)
     })
   })

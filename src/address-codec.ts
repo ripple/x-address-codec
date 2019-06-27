@@ -30,7 +30,7 @@ export class AddressCodec {
   private readonly base: number
   /* eslint-enable indent */
 
-  constructor (private readonly alphabet: string, private readonly sha256: Sha256Function) {
+  constructor (public readonly alphabet: string, private readonly sha256: Sha256Function) {
     this.codec = baseCodec(alphabet)
     this.base = alphabet.length
   }
@@ -165,8 +165,9 @@ export class AddressCodec {
   }
 
   decodeTagged(tagged: string) {
-    const decoded = this.decodeChecked(tagged).reverse()
-    const reader = new OerReader(decoded)
+    const rawBytes = this.decodeChecked(tagged)
+    const reversed = rawBytes.reverse()
+    const reader = new OerReader(reversed)
 
     const prefixLength = reader.readUInt8Number()
     const addressLength = reader.readUInt8Number()
